@@ -1,0 +1,38 @@
+<html>
+  <body>
+    <canvas id="Canvas" width="400px" height="400px"></canvas>
+    <canvas id="Canvas2" width="400px" height="400px"></canvas>
+  </body>
+  <script src="image.js"></script>
+  <script>
+   const drawImage = (url, ctx) => {
+     const image = new Image();
+     image.src = url;
+     image.onload = () => {
+       ctx.drawImage(image, 0, 0)
+     }
+   }
+   window.addEventListener('load', function()
+     {
+       let canvas = document.getElementById("Canvas");
+       let ctx = canvas.getContext("2d");
+       drawImage("image.jpg", ctx)
+       let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+     }, false);
+   function passImage() {
+     let canvas = document.getElementById("Canvas");
+     let ctx = canvas.getContext("2d");
+     let imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+     const res = Module.cannyImage(imgData.width,imgData.height,imgData.data)
+     const resultImg = new ImageData(new Uint8ClampedArray(res.data), res.columns, res.rows)
+
+     let canvas2 = document.getElementById("Canvas2");
+
+     let ctx2 = canvas2.getContext("2d");
+     ctx2.clearRect(0, 0, canvas2.width, canvas2.height);
+     ctx2.putImageData(resultImg,0,0);
+     
+   }
+   setTimeout(passImage,200)
+  </script>
+</html>

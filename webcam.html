@@ -1,0 +1,103 @@
+<html>
+  <body>
+    <h2>Video Capture Example</h2>
+    <p>
+      Click <b>Start/Stop</b> button to start or stop the camera capture.<br>
+      The <b>videoInput</b> is a &lt;video&gt; element used as input.
+      The <b>canvasOutput</b> is a &lt;canvas&gt; element used as output.
+    </p>
+    <div>
+      <div class="control"><button id="startAndStop">Start</button></div>
+    </div>
+    <p class="err" id="errorMessage"></p>
+    <div>
+      <table cellpadding="0" cellspacing="0" width="0" border="0">
+        <tr>
+          <td>
+            <video id="videoInput" width="320" height="240"></video>
+          </td>
+          <td>
+            <canvas id="canvasOutput" width="320" height="240"></canvas>
+          </td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="caption">videoInput</div>
+          </td>
+          <td>
+            <div class="caption">canvasOutput</div>
+          </td>
+          <td></td>
+          <td></td>
+        </tr>
+      </table>
+    </div>
+  </body>
+  <script src="image.js"></script>
+  <script src="video_utils.js"></script>
+  <script>
+   let utils = new Utils('errorMessage');
+   let streaming = false;
+   let videoInput = document.getElementById('videoInput');
+   let startAndStop = document.getElementById('startAndStop');
+   let canvasOutput = document.getElementById('canvasOutput');
+   let canvasContext = canvasOutput.getContext('2d');
+
+   startAndStop.addEventListener('click', () => {
+     if (!streaming) {
+       utils.clearError();
+       utils.startCamera('qvga', onVideoStarted, 'videoInput');
+     } else {
+       utils.stopCamera();
+       onVideoStopped();
+     }
+   });
+
+   function onVideoStarted() {
+     streaming = true;
+     startAndStop.innerText = 'Stop';
+     videoInput.width = videoInput.videoWidth;
+     videoInput.height = videoInput.videoHeight;
+     processVideo();
+   }
+
+   function onVideoStopped() {
+     streaming = false;
+     canvasContext.clearRect(0, 0, canvasOutput.width, canvasOutput.height);
+     startAndStop.innerText = 'Start';
+   }
+
+   let video = document.getElementById('videoInput');
+   let src;
+   let cap = new VideoCapture(video);
+
+   const FPS = 30;
+   function processVideo() {
+     try {
+       if (!streaming) {
+         return;
+       }
+       let begin = Date.now();
+       // start processing.
+       delete src
+       src = cap.read();
+       const res = Module.cannyImage(src.width,src.height,src.data)
+       const resultImg = new ImageData(new Uint8ClampedArray(res.data), res.columns, res.rows)
+       canvasContext.clearRect(0, 0, canvasOutput.width, canvasOutput.height);
+       canvasContext.putImageData(resultImg,0,0);
+       delete res
+       delete resultImg
+       // schedule the next one.
+       let delay = 1000/FPS - (Date.now() - begin);
+       setTimeout(processVideo, delay);
+     } catch (err) {
+       utils.printError(err);
+     }
+   };
+
+   // schedule the first one.
+   /* setTimeout(processVideo, 0);    */
+  </script>
+</html>
